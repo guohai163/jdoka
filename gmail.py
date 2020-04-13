@@ -123,7 +123,7 @@ class GMail:
 
         with open(attach_path, 'rb') as f:
             __mime = MIMEBase('text/csv', 'csv', filename='query_result.csv')
-            __mime.add_header('Content-Disposition', 'attachment', filename='query_result.csv')
+            __mime.add_header('Content-Disposition', 'attachment', filename='query_result.xlsx')
             __mime.add_header('Content-ID', '<0>')
             __mime.add_header('X-Attachment-Id', '0')
             __mime.set_payload(f.read())

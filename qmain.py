@@ -1,5 +1,6 @@
 # -*- coding:utf8 -*-
 import getopt
+import os
 import sys
 
 from doperating import DOperating
@@ -21,9 +22,9 @@ def getparm(parm):
     except getopt.GetoptError as err:
         print(str(err))
         sys.exit(2)
-    mail_config = None
-    db_config = None
-    result_path = None
+    mail_config = 'mail-config.ini'
+    db_config = 'db-config.ini'
+    result_path = 'result'
     for o, a in optlist:
         if o == '--mail-config':
             mail_config = a
@@ -31,9 +32,15 @@ def getparm(parm):
             db_config = a
         elif o == '--result-path':
             result_path = a
-    if mail_config is None or db_config is None or result_path is None:
-        print('ERROR：pleas input parm')
+    # 检查文件是否存在
+    if not os.path.exists(mail_config):
+        print('Please check if mail config file exists!')
         sys.exit(1)
+    if not os.path.exists(db_config):
+        print('Please check if database config file exists!')
+        sys.exit(1)
+    if not os.path.exists(result_path):
+        os.makedirs(result_path)
     LOG.debug('mail:%s,db:%s,result:%s', mail_config, db_config, result_path)
     return mail_config, db_config, result_path
 

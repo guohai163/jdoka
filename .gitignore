@@ -232,3 +232,5 @@ dmypy.json
 venv/
 
 .idea/
+
+result/
