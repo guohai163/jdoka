@@ -13,9 +13,9 @@ LOG = log4p.GetLogger('GMail').logger
 
 class GMail:
     query_list = []
-    __imap_conn = None
-    __smtp_conn = None
-    __from_mail = ''
+    _imap_conn = None
+    _smtp_conn = None
+    _from_mail = ''
 
     def __init__(self, server, port, user, password, box, smtp_server, smtp_port):
         """
@@ -27,19 +27,19 @@ class GMail:
         :param box: 收件箱
         """
         LOG.info('init GMail class')
-        self.__from_mail = user
+        self._from_mail = user
         if smtp_server != '':
-            self.__smtp_conn = SMTP_SSL(host=smtp_server, port=smtp_port)
-            self.__smtp_conn.login(user, password)
+            self._smtp_conn = SMTP_SSL(host=smtp_server, port=smtp_port)
+            self._smtp_conn.login(user, password)
         try:
-            self.__imap_conn = imaplib.IMAP4_SSL(server, port)
-            self.__imap_conn.login(user, password)
+            self._imap_conn = imaplib.IMAP4_SSL(server, port)
+            self._imap_conn.login(user, password)
         except imaplib.IMAP4.error as e:
             LOG.error("登录失败: %s" % e)
             sys.exit(1)
         LOG.info("邮箱登录成功")
-        self.__imap_conn.select(box)
-        result, data = self.__imap_conn.search(None, 'ALL')
+        self._imap_conn.select(box)
+        result, data = self._imap_conn.search(None, 'ALL')
         if result == 'OK':
             self.all = data[0].split()
             LOG.info('所有邮件数量:%s' % len(self.all))
@@ -49,26 +49,26 @@ class GMail:
         退出时需要进行调用
         :return:
         """
-        if self.__imap_conn is not None:
-            self.__imap_conn.close()
-            self.__imap_conn.logout()
-        if self.__smtp_conn is not None:
-            self.__smtp_conn.quit()
+        if self._imap_conn is not None:
+            self._imap_conn.close()
+            self._imap_conn.logout()
+        if self._smtp_conn is not None:
+            self._smtp_conn.quit()
 
-    def __parse_header(self, msg):
+    def _parse_header(self, msg):
         """解析邮件头"""
         data, charset = email.header.decode_header(msg['subject'])[0]
         return str(data, charset), email.utils.parseaddr(msg['From'])[1]
 
-    def __parse_part_to_str(self, part):
+    def _parse_part_to_str(self, part):
         charset = part.get_charset() or 'gb2312'
         payload = part.get_payload(decode=True)
         if not payload:
             return
         return str(part.get_payload(decode=True), charset)
 
-    def __parse_body(self, msg):
-        __mail_body = ''
+    def _parse_body(self, msg):
+        mail_body = ''
         for part in msg.walk():
             if not part.is_multipart():
                 # charset = part.get_charset()
@@ -80,21 +80,21 @@ class GMail:
                     fname = fdh[0][0]
                     print('附件名:', fname)
                 else:
-                    __mail_body += self.__parse_part_to_str(part) + '\n'
-        return __mail_body
+                    mail_body += self._parse_part_to_str(part) + '\n'
+        return mail_body
 
     def parse(self):
         nums = self.all
         for num in nums:
             try:
-                result, data = self.__imap_conn.fetch(num, '(RFC822)')
+                result, data = self._imap_conn.fetch(num, '(RFC822)')
                 if result == 'OK':
                     msg = email.message_from_string(data[0][1].decode())
-                    mail_subject, mail_from = self.__parse_header(msg)
-                    mail_body = self.__parse_body(msg)
-                    __query_mail = {'subject': mail_subject, 'from': mail_from, 'body': mail_body, 'num': num}
-                    LOG.debug('收到邮件%s', __query_mail['subject'])
-                    self.query_list.append(__query_mail)
+                    mail_subject, mail_from = self._parse_header(msg)
+                    mail_body = self._parse_body(msg)
+                    query_mail = {'subject': mail_subject, 'from': mail_from, 'body': mail_body, 'num': num}
+                    LOG.debug('收到邮件%s', query_mail['subject'])
+                    self.query_list.append(query_mail)
             except Exception as e:
                 LOG.error('Message %s 解析错误:%s' % (num, e))
 
@@ -104,7 +104,7 @@ class GMail:
         :param num: 邮件在邮箱中编号
         :return:
         """
-        self.__imap_conn.store(num, '+FLAGS', '\\Deleted')
+        self._imap_conn.store(num, '+FLAGS', '\\Deleted')
 
     def send_mail(self, to_mail, subject, attach_path):
         """
@@ -115,19 +115,19 @@ class GMail:
         :param body:
         :return:
         """
-        __msg = MIMEMultipart()
-        __msg['From'] = '程序自动查询结果 <%s>' % self.__from_mail
-        __msg['To'] = to_mail
-        __msg['Subject'] = Header(subject, 'utf-8').encode()
-        __msg.attach(MIMEText('查询结果见附件', 'plain', 'utf-8'))
+        msg = MIMEMultipart()
+        msg['From'] = '程序自动查询结果 <%s>' % self._from_mail
+        msg['To'] = to_mail
+        msg['Subject'] = Header(subject, 'utf-8').encode()
+        msg.attach(MIMEText('查询结果见附件', 'plain', 'utf-8'))
 
         with open(attach_path, 'rb') as f:
-            __mime = MIMEBase('text/csv', 'csv', filename='query_result.csv')
-            __mime.add_header('Content-Disposition', 'attachment', filename='query_result.xlsx')
-            __mime.add_header('Content-ID', '<0>')
-            __mime.add_header('X-Attachment-Id', '0')
-            __mime.set_payload(f.read())
-            encoders.encode_base64(__mime)
-            __msg.attach(__mime)
+            mime = MIMEBase('text/csv', 'csv', filename='query_result.csv')
+            mime.add_header('Content-Disposition', 'attachment', filename='query_result.xlsx')
+            mime.add_header('Content-ID', '<0>')
+            mime.add_header('X-Attachment-Id', '0')
+            mime.set_payload(f.read())
+            encoders.encode_base64(mime)
+            msg.attach(mime)
 
-        self.__smtp_conn.sendmail(from_addr=self.__from_mail, to_addrs=to_mail, msg=__msg.as_string())
+        self._smtp_conn.sendmail(from_addr=self._from_mail, to_addrs=to_mail, msg=msg.as_string())

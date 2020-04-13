@@ -12,11 +12,6 @@ def idcard_query(profession_config, parm):
     :return:
     """
     LOG.debug('准备查询身份证')
-    # 白名单检查
-    whitelist = profession_config[parm['subject']]['whitelist']
-    if whitelist.find(parm['from'], 0, len(whitelist)) == -1:
-        LOG.error('查询人不在白名单中，请检查 %s', parm['subject'])
-        return None
     # 处理查询数据
     accounts = re.search(r'account:([^\r\n]+)', parm['body'], re.M | re.I).group(1).split(',')
     LOG.debug('待查询账号:%s', accounts)
