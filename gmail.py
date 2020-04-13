@@ -11,6 +11,7 @@ import log4p
 
 LOG = log4p.GetLogger('GMail').logger
 
+
 class GMail:
     query_list = []
     _imap_conn = None
@@ -116,7 +117,7 @@ class GMail:
         :return:
         """
         msg = MIMEMultipart()
-        msg['From'] = '程序自动查询结果 <%s>' % self._from_mail
+        msg['From'] = Header('程序自动查询结果', 'utf-8').encode() + ' <%s>' % self._from_mail
         msg['To'] = to_mail
         msg['Subject'] = Header(subject, 'utf-8').encode()
         msg.attach(MIMEText('查询结果见附件', 'plain', 'utf-8'))
