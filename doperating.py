@@ -44,7 +44,7 @@ class DOperating:
             return None
 
         if not self._check_white_list(parm):
-            # 白名单检查未通过
+            LOG.error('[%s]<%s>白名单检查未通过', parm['subject'], parm['messageid'])
             return None
         # 准备开始调用
         if self.__profession_config.has_option(parm['subject'], 'sql'):

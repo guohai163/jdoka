@@ -26,6 +26,12 @@ WORKDIR /opt/jdoka
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY *.py .
+COPY docker-entrypoint.sh /usr/local/bin/
+COPY log4p.json /usr/local/lib/python3.7/site-packages/log4p/log4p.json
 
-CMD [ "python", "/opt/jdoka/qmain.py" ]
+COPY *.py ./
+RUN mkdir /opt/jdoka/logs
+
+ENTRYPOINT ["docker-entrypoint.sh"]
+
+CMD ["python", "/opt/jdoka/jdoka.py", "-l"]

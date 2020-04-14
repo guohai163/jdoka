@@ -59,7 +59,7 @@ class GMail:
     def _parse_header(self, msg):
         """解析邮件头"""
         data, charset = email.header.decode_header(msg['subject'])[0]
-        return str(data, charset), email.utils.parseaddr(msg['From'])[1]
+        return str(data, charset), email.utils.parseaddr(msg['From'])[1], email.utils.parseaddr(msg['Message-ID'])[1]
 
     def _parse_part_to_str(self, part):
         charset = part.get_charset() or 'gb2312'
@@ -91,9 +91,9 @@ class GMail:
                 result, data = self._imap_conn.fetch(num, '(RFC822)')
                 if result == 'OK':
                     msg = email.message_from_string(data[0][1].decode())
-                    mail_subject, mail_from = self._parse_header(msg)
+                    mail_subject, mail_from, message_id = self._parse_header(msg)
                     mail_body = self._parse_body(msg)
-                    query_mail = {'subject': mail_subject, 'from': mail_from, 'body': mail_body, 'num': num}
+                    query_mail = {'messageid': message_id, 'subject': mail_subject, 'from': mail_from, 'body': mail_body, 'num': num}
                     LOG.debug('收到邮件%s', query_mail['subject'])
                     self.query_list.append(query_mail)
             except Exception as e:

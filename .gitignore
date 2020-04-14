@@ -234,3 +234,5 @@ venv/
 .idea/
 
 result/
+
+conf/profession.conf

@@ -12,21 +12,40 @@ import log4p
 LOG = log4p.GetLogger('__main__').logger
 
 
+def usage():
+    """
+    打印帮助
+    :return:
+    """
+    print("""usage: python3 jdoka.py [option]
+-l        : 使程序循环执行，默认执行间隔5分钟
+-t minute : 使用此参数可以修改循环的间隔时间，只有使用-l后此参数才会生效
+-h,--help : 打印此帮助
+--==================--
+--mail-config=path : 收发信服务器配置项目路径，如不配置为项目同目录下的conf内
+--db-config=path   : 数据库服务器配置项目路径，如不配置为项目同目录下的conf内
+--result-path=path : 业务处理配置文件
+
+更多帮助：https://github.com/guohai163/jdoka/wiki""")
+
+
 def get_parm(parm):
     """
     检查接收的参数
     :param parm:
     :return:
     """
-    try:
-        optlist, args = getopt.getopt(sys.argv[1:], 'th', ['mail-config=', 'db-config=', 'result-path=', 'help'])
-    except getopt.GetoptError as err:
-        print(str(err))
-        sys.exit(2)
+    sleep_time = 5
     mail_config = 'conf/mail-config.ini'
     db_config = 'conf/db-config.ini'
     result_path = 'result'
-    sleep_time = 0
+    loop = False
+    try:
+        optlist, args = getopt.getopt(parm, 'hlt:', ['mail-config=', 'db-config=', 'result-path=', 'help'])
+    except getopt.GetoptError as err:
+        print(str(err))
+        sys.exit(2)
+
     for o, a in optlist:
         if o == '--mail-config':
             mail_config = a
@@ -35,13 +54,12 @@ def get_parm(parm):
         elif o == '--result-path':
             result_path = a
         elif o == '-t':
-            if a == '':
-                sleep_time = 5
-            else:
-                sleep_time = a
+            sleep_time = int(a)
         elif o in ('-h', '--help'):
             usage()
             sys.exit()
+        elif o == '-l':
+            loop = True
     # 检查文件是否存在
     if not os.path.exists(mail_config):
         print('Please check if mail config file exists!')
@@ -52,13 +70,13 @@ def get_parm(parm):
     if not os.path.exists(result_path):
         os.makedirs(result_path)
     LOG.debug('mail:%s,db:%s,result:%s', mail_config, db_config, result_path)
-    return mail_config, db_config, result_path, sleep_time
+    return mail_config, db_config, result_path, sleep_time, loop
 
 
 def main():
-    mail_config_path, db_config_path, result_path, sleep_time = get_parm(sys.argv[1:])
+    mail_config_path, db_config_path, result_path, sleep_time, loop = get_parm(sys.argv[1:])
     config = configparser.ConfigParser()
-    while 1:
+    while loop:
         config.read(mail_config_path)
         mail = GMail(server=config['mail.config']['imap_server'],
                      port=config['mail.config']['imap_port'],
@@ -73,10 +91,12 @@ def main():
         if len(mail.query_list) > 0:
             work = DOperating(dbconfig_path=db_config_path, proconfig_path='conf/profession.conf',
                               result_save_path=result_path)
-            for query in mail.query_list:
+
+            while mail.query_list:
+                query = mail.query_list.pop()
                 result = work.query(parm=query)
                 if result is None:
-                    LOG.info('查询无结果')
+                    LOG.info('邮件<%s>查询无结果', query['messageid'])
                 else:
                     LOG.info('查询成功%s', result)
                     mail.send_mail(query['from'], query['subject'].replace('[q]', '') + '结果', result)
@@ -84,27 +104,10 @@ def main():
 
         LOG.debug('本次处理结束')
         mail.over()
-        if sleep_time == 0:
-            break
         # 休眠指定时间
+        LOG.info('本次查询结束，休眠%s分钟', sleep_time)
         time.sleep(sleep_time * 60)
 
 
 if __name__ == '__main__':
     main()
-
-
-def usage():
-    """
-    打印帮助
-    :return:
-    """
-    print("""usage: python3 jdoka.py [option]
--t        : 使用此参数程序会无限循环，-t后接循环休眠分钟数。默认为5
--h,--help : 打印此帮助
---==================--
---mail-config=path : 收发信服务器配置项目路径，如不配置为项目同目录下的conf内
---db-config=path   : 数据库服务器配置项目路径，如不配置为项目同目录下的conf内
---result-path=path : 业务处理配置文件
-
-更多帮助：https://github.com/guohai163/jdoka/wiki""")
