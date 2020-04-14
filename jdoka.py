@@ -19,7 +19,7 @@ def get_parm(parm):
     :return:
     """
     try:
-        optlist, args = getopt.getopt(sys.argv[1:], 't', ['mail-config=', 'db-config=', 'result-path='])
+        optlist, args = getopt.getopt(sys.argv[1:], 'th', ['mail-config=', 'db-config=', 'result-path=', 'help'])
     except getopt.GetoptError as err:
         print(str(err))
         sys.exit(2)
@@ -35,7 +35,13 @@ def get_parm(parm):
         elif o == '--result-path':
             result_path = a
         elif o == '-t':
-            sleep_time = a
+            if a == '':
+                sleep_time = 5
+            else:
+                sleep_time = a
+        elif o in ('-h', '--help'):
+            usage()
+            sys.exit()
     # 检查文件是否存在
     if not os.path.exists(mail_config):
         print('Please check if mail config file exists!')
@@ -55,17 +61,18 @@ def main():
     while 1:
         config.read(mail_config_path)
         mail = GMail(server=config['mail.config']['imap_server'],
-                      port=config['mail.config']['imap_port'],
-                      user=config['mail.config']['user'],
-                      password=config['mail.config']['password'],
-                      box=config['mail.config']['box'],
-                      smtp_server=config['mail.config']['smtp_server'],
-                      smtp_port=config['mail.config']['smtp_port'])
+                     port=config['mail.config']['imap_port'],
+                     user=config['mail.config']['user'],
+                     password=config['mail.config']['password'],
+                     box=config['mail.config']['box'],
+                     smtp_server=config['mail.config']['smtp_server'],
+                     smtp_port=config['mail.config']['smtp_port'])
 
         LOG.debug('开始接收邮件')
         mail.parse()
         if len(mail.query_list) > 0:
-            work = DOperating(dbconfig_path=db_config_path, proconfig_path='conf/profession.conf', result_save_path=result_path)
+            work = DOperating(dbconfig_path=db_config_path, proconfig_path='conf/profession.conf',
+                              result_save_path=result_path)
             for query in mail.query_list:
                 result = work.query(parm=query)
                 if result is None:
@@ -85,3 +92,19 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+def usage():
+    """
+    打印帮助
+    :return:
+    """
+    print("""usage: python3 jdoka.py [option]
+-t        : 使用此参数程序会无限循环，-t后接循环休眠分钟数。默认为5
+-h,--help : 打印此帮助
+--==================--
+--mail-config=path : 收发信服务器配置项目路径，如不配置为项目同目录下的conf内
+--db-config=path   : 数据库服务器配置项目路径，如不配置为项目同目录下的conf内
+--result-path=path : 业务处理配置文件
+
+更多帮助：https://github.com/guohai163/jdoka/wiki""")
