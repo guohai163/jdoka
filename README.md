@@ -33,7 +33,7 @@ whitelist = guohai@gmail.com
 
 启动docker容器
 ~~~ bash
-shell> docker run --rm -v /home/jdoka/conf/:/opt/jdoka/conf/ jdoka:1.0
+shell> docker run --rm -v /home/jdoka/conf/:/opt/jdoka/conf/ gcontainer/jdoka:1.0
 
 2020-04-14 06:46:02,579 - gmail.py line+30 - INFO - init GMail class
 2020-04-14 06:46:03,505 - gmail.py line+41 - INFO - 邮箱登录成功
