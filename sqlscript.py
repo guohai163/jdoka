@@ -35,8 +35,10 @@ def batch_query(profession_config, parm):
     :param parm: 参数
     :return:
     """
-    min_code = re.search(r'min_code:([^\r\n]+)', parm['body']).group(1)
-    max_code = re.search(r'max_code:([^\r\n]+)', parm['body']).group(1)
-    sql = "SELECT * FROM vaccine_batch_tb where code>%s and code<%s" % (min_code, max_code)
+    min_code = re.search(r'min_code:([^\r\n]+)', parm['body'])
+    max_code = re.search(r'max_code:([^\r\n]+)', parm['body'])
+    if min_code is None or max_code is None:
+        return None
+    sql = "SELECT * FROM vaccine_batch_tb where code>%s and code<%s" % (min_code.group(1), max_code.group(1))
     LOG.debug(sql)
     return sql
