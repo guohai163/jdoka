@@ -18,7 +18,18 @@
 
 ## 安装
 测试使用推荐使用docker环境，可以省去odbc安装的繁琐过程。
-首先准备好conf目录下的三个配置文件，可以参考该目录下的三个示例文件进行配置。更详细的配置说明可以看 [这里](https://github.com/guohai163/jdoka/wiki/ConfigurationFile) 。将mail-config.ini、db-config.ini、profession.conf存放在同一个目录下。比如我们放在了本地/home/jdoka/conf/
+首先准备好conf目录下的三个配置文件，可以参考该目录下的三个示例文件进行配置。我们看一下每次新增加业务时要配置的业务处理文件，主要就是把写好的SQL放进去即可
+~~~ ini
+[昨日注册人数]
+# 查询脚本
+sql = SELECT count(*) as yday_reg_num  FROM [community_login_log] WHERE DateDiff(dd,login_time,getdate())=1
+# 要使用的DB，会去db-config.ini进行搜索
+database = accountdb_log
+# 非必须参数，白名单。
+whitelist = guohai@gmail.com
+~~~
+
+如果想实现自定义参数等高级功能，更详细的配置说明可以看 [这里](https://github.com/guohai163/jdoka/wiki/ConfigurationFile) 。将mail-config.ini、db-config.ini、profession.conf存放在同一个目录下。比如我们放在了本地/home/jdoka/conf/
 
 启动docker容器
 ~~~ bash
