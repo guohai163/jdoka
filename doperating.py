@@ -55,7 +55,11 @@ class DOperating:
         if hasattr(sqlscript, self.__profession_config[parm['subject']]['funname']):
             LOG.debug('方法%s反射成功', self.__profession_config[parm['subject']]['funname'])
             pro_func = getattr(sqlscript, self.__profession_config[parm['subject']]['funname'])
-            sql = pro_func(self.__profession_config, parm)
+            try:
+                sql = pro_func(self.__profession_config, parm)
+            except Exception as err:
+                LOG.error('自定义方法[%s]发生异常:\n%s', self.__profession_config[parm['subject']]['funname'], str(err))
+                sql = None
             if sql is None:
                 LOG.error('返回的sql为空')
                 return None

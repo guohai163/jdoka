@@ -38,10 +38,12 @@ def get_parm(parm):
     sleep_time = 5
     mail_config = 'conf/mail-config.ini'
     db_config = 'conf/db-config.ini'
+    profession_config = 'conf/profession.conf'
     result_path = 'result'
     loop = False
     try:
-        optlist, args = getopt.getopt(parm, 'hlt:', ['mail-config=', 'db-config=', 'result-path=', 'help'])
+        optlist, args = getopt.getopt(parm, 'hlt:', ['mail-config=', 'db-config=', 'result-path=',
+                                                     'profession-config=', 'help'])
     except getopt.GetoptError as err:
         print(str(err))
         sys.exit(2)
@@ -53,6 +55,8 @@ def get_parm(parm):
             db_config = a
         elif o == '--result-path':
             result_path = a
+        elif o == '--profession-config':
+            profession_config = a
         elif o == '-t':
             sleep_time = int(a)
         elif o in ('-h', '--help'):
@@ -67,16 +71,19 @@ def get_parm(parm):
     if not os.path.exists(db_config):
         print('Please check if database config file exists!')
         sys.exit(1)
+    if not os.path.exists(profession_config):
+        print('Please check if profession config file exists!')
+        sys.exit(1)
     if not os.path.exists(result_path):
         os.makedirs(result_path)
     LOG.debug('mail:%s,db:%s,result:%s', mail_config, db_config, result_path)
-    return mail_config, db_config, result_path, sleep_time, loop
+    return mail_config, db_config, profession_config, result_path, sleep_time, loop
 
 
 def main():
-    mail_config_path, db_config_path, result_path, sleep_time, loop = get_parm(sys.argv[1:])
+    mail_config_path, db_config_path, profession_config_path, result_path, sleep_time, loop = get_parm(sys.argv[1:])
     config = configparser.ConfigParser()
-    while loop:
+    while True:
         config.read(mail_config_path)
         mail = GMail(server=config['mail.config']['imap_server'],
                      port=config['mail.config']['imap_port'],
@@ -89,7 +96,7 @@ def main():
         LOG.debug('开始接收邮件')
         mail.parse()
         if len(mail.query_list) > 0:
-            work = DOperating(dbconfig_path=db_config_path, proconfig_path='conf/profession.conf',
+            work = DOperating(dbconfig_path=db_config_path, proconfig_path=profession_config_path,
                               result_save_path=result_path)
 
             while mail.query_list:
@@ -104,6 +111,8 @@ def main():
 
         LOG.debug('本次处理结束')
         mail.over()
+        if not loop:
+            break
         # 休眠指定时间
         LOG.info('本次查询结束，休眠%s分钟', sleep_time)
         time.sleep(sleep_time * 60)
