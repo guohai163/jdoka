@@ -44,3 +44,8 @@
     ~~~ shell script
     python3 jdoka.py
     ~~~
+    
+===
+    
+    
+![haige](http://guohai.org/assets/wechat.jpg)
