@@ -4,6 +4,7 @@ import os
 import sys
 import time
 
+from archive import Archive
 from doperating import DOperating
 from gmail import GMail
 import configparser
@@ -83,6 +84,7 @@ def get_parm(parm):
 def main():
     mail_config_path, db_config_path, profession_config_path, result_path, sleep_time, loop = get_parm(sys.argv[1:])
     config = configparser.ConfigParser()
+    arch = Archive(result_path + '/result_data.db')
     while True:
         config.read(mail_config_path)
         mail = GMail(server=config['mail.config']['imap_server'],
@@ -106,6 +108,7 @@ def main():
                     LOG.info('邮件<%s>查询无结果', query['messageid'])
                 else:
                     LOG.info('查询成功%s', result)
+                    arch.add_data(query, result)
                     mail.send_mail(query['from'], query['subject'].replace('[q]', '') + '结果', result)
                     mail.delete(query['num'])
 
@@ -116,6 +119,7 @@ def main():
         # 休眠指定时间
         LOG.info('本次查询结束，休眠%s分钟', sleep_time)
         time.sleep(sleep_time * 60)
+    arch.over()
 
 
 if __name__ == '__main__':
