@@ -59,7 +59,10 @@ class GMail:
     def _parse_header(self, msg):
         """解析邮件头"""
         data, charset = email.header.decode_header(msg['subject'])[0]
-        return str(data, charset), email.utils.parseaddr(msg['From'])[1], email.utils.parseaddr(msg['Message-ID'])[1]
+        mail_date = email.utils.parsedate_to_datetime(msg['Date'])
+        message_id = email.utils.parseaddr(msg['Message-ID'])[1]
+        mail_from = email.utils.parseaddr(msg['From'])[1]
+        return str(data, charset), mail_from, message_id, mail_date
 
     def _parse_part_to_str(self, part):
         charset = part.get_charset() or 'gb2312'
@@ -72,8 +75,6 @@ class GMail:
         mail_body = ''
         for part in msg.walk():
             if not part.is_multipart():
-                # charset = part.get_charset()
-                # contenttype = part.get_content_type()
                 name = part.get_param("name")
                 if name:
                     fh = email.header.Header(name)
@@ -91,9 +92,10 @@ class GMail:
                 result, data = self._imap_conn.fetch(num, '(RFC822)')
                 if result == 'OK':
                     msg = email.message_from_string(data[0][1].decode())
-                    mail_subject, mail_from, message_id = self._parse_header(msg)
+                    mail_subject, mail_from, message_id, mail_date = self._parse_header(msg)
                     mail_body = self._parse_body(msg)
-                    query_mail = {'messageid': message_id, 'subject': mail_subject, 'from': mail_from, 'body': mail_body, 'num': num}
+                    query_mail = {'messageid': message_id, 'subject': mail_subject, 'from': mail_from,
+                                  'body': mail_body, 'num': num, 'date': mail_date}
                     LOG.debug('收到邮件%s', query_mail['subject'])
                     self.query_list.append(query_mail)
             except Exception as e:

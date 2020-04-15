@@ -5,6 +5,8 @@ import uuid
 import xlsxwriter
 import pyodbc
 import sqlscript
+import datetime
+import os
 
 LOG = log4p.GetLogger('DOperating').logger
 
@@ -106,7 +108,11 @@ class DOperating:
                 'server'] + ';DATABASE=' + database + ';UID=' + self.__db_config[database]['user'] + ';PWD=' +
             self.__db_config[database]['password'])
         cursor = db_conn.cursor()
-        path = self.__result_save_path + '/' + str(uuid.uuid1()) + '.xlsx'
+        result_dir = '%s/%d/%d' % (self.__result_save_path, datetime.datetime.now().year, datetime.datetime.now().month)
+        if not os.path.exists(result_dir):
+            LOG.debug('路径%s不存在，准备创建', result_dir)
+            os.makedirs(result_dir)
+        path = result_dir + '/' + str(uuid.uuid1()) + '.xlsx'
         workbook = xlsxwriter.Workbook(path)
         worksheet = workbook.add_worksheet()
         cursor.execute(sql)
