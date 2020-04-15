@@ -15,10 +15,13 @@ LOG = log4p.GetLogger('GMail').logger
 
 
 class GMail:
+    # TODO:类需要进行重构，需要使用smtp时再进行连接，否则会超时
     query_list = []
     _imap_conn = None
-    _smtp_conn = None
-    _from_mail = ''
+    _user = ''
+    _pass = ''
+    _smtp_server = ''
+    _smtp_port = ''
 
     def __init__(self, server, port, user, password, box, smtp_server, smtp_port):
         """
@@ -30,14 +33,11 @@ class GMail:
         :param box: 收件箱
         """
         LOG.info('init GMail class')
-        self._from_mail = user
-        if smtp_server != '':
-            try:
-                self._smtp_conn = smtplib.SMTP_SSL(host=smtp_server, port=smtp_port)
-                self._smtp_conn.login(user, password)
-            except smtplib.SMTPAuthenticationError as e:
-                LOG.error("smtp登录失败: %s" % e)
-                sys.exit(1)
+        self._user = user
+        self._pass = password
+        self._smtp_server = smtp_server
+        self._smtp_port = smtp_port
+
         try:
             self._imap_conn = imaplib.IMAP4_SSL(server, port)
             self._imap_conn.login(user, password)
@@ -45,7 +45,10 @@ class GMail:
             LOG.error("imap登录失败: %s" % e)
             sys.exit(1)
         LOG.info("邮箱登录成功")
-        self._imap_conn.select(box)
+        if box != '':
+            self._imap_conn.select(box)
+        else:
+            self._imap_conn.select()
         result, data = self._imap_conn.search(None, 'ALL')
         if result == 'OK':
             self.all = data[0].split()
@@ -59,8 +62,6 @@ class GMail:
         if self._imap_conn is not None:
             self._imap_conn.close()
             self._imap_conn.logout()
-        if self._smtp_conn is not None:
-            self._smtp_conn.quit()
 
     def _parse_header(self, msg):
         """解析邮件头"""
@@ -125,7 +126,7 @@ class GMail:
         :return:
         """
         msg = MIMEMultipart()
-        msg['From'] = Header('程序自动查询结果', 'utf-8').encode() + ' <%s>' % self._from_mail
+        msg['From'] = Header('程序自动查询结果', 'utf-8').encode() + ' <%s>' % self._user
         msg['To'] = to_mail
         msg['Subject'] = Header(subject, 'utf-8').encode()
         msg.attach(MIMEText('查询结果见附件', 'plain', 'utf-8'))
@@ -138,5 +139,12 @@ class GMail:
             mime.set_payload(f.read())
             encoders.encode_base64(mime)
             msg.attach(mime)
+        try:
+            smtp_conn = smtplib.SMTP_SSL(host=self._smtp_server, port=self._smtp_port)
+            smtp_conn.login(self._user, self._pass)
+        except smtplib.SMTPAuthenticationError as e:
+            LOG.error("smtp登录失败: %s" % e)
+            return
+        smtp_conn.sendmail(from_addr=self._user, to_addrs=to_mail, msg=msg.as_string())
+        smtp_conn.quit()
 
-        self._smtp_conn.sendmail(from_addr=self._from_mail, to_addrs=to_mail, msg=msg.as_string())
