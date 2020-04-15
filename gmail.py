@@ -1,12 +1,14 @@
 # -*- coding:utf8 -*-
+import email
+import imaplib
+import smtplib
 import sys
-import imaplib, email
 from email import encoders
+from email.header import Header
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
-from email.header import Header
 from email.mime.text import MIMEText
-from smtplib import SMTP_SSL
+
 import log4p
 
 LOG = log4p.GetLogger('GMail').logger
@@ -30,13 +32,17 @@ class GMail:
         LOG.info('init GMail class')
         self._from_mail = user
         if smtp_server != '':
-            self._smtp_conn = SMTP_SSL(host=smtp_server, port=smtp_port)
-            self._smtp_conn.login(user, password)
+            try:
+                self._smtp_conn = smtplib.SMTP_SSL(host=smtp_server, port=smtp_port)
+                self._smtp_conn.login(user, password)
+            except smtplib.SMTPAuthenticationError as e:
+                LOG.error("smtp登录失败: %s" % e)
+                sys.exit(1)
         try:
             self._imap_conn = imaplib.IMAP4_SSL(server, port)
             self._imap_conn.login(user, password)
         except imaplib.IMAP4.error as e:
-            LOG.error("登录失败: %s" % e)
+            LOG.error("imap登录失败: %s" % e)
             sys.exit(1)
         LOG.info("邮箱登录成功")
         self._imap_conn.select(box)
