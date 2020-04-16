@@ -13,6 +13,8 @@ import log4p
 
 LOG = log4p.GetLogger('GMail').logger
 
+VERSION = '1.0'
+
 
 class GMail:
     # TODO:类需要进行重构，需要使用smtp时再进行连接，否则会超时
@@ -129,6 +131,8 @@ class GMail:
         msg['From'] = Header('程序自动查询结果', 'utf-8').encode() + ' <%s>' % self._user
         msg['To'] = to_mail
         msg['Subject'] = Header(subject, 'utf-8').encode()
+        msg['Jdoka-Version'] = VERSION
+        msg['Jdoka-Url'] = 'https://github.com/guohai163/jdoka'
         msg.attach(MIMEText('查询结果见附件', 'plain', 'utf-8'))
 
         with open(attach_path, 'rb') as f:
