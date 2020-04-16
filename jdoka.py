@@ -25,7 +25,9 @@ def usage():
 --==================--
 --mail-config=path : 收发信服务器配置项目路径，如不配置为项目同目录下的conf内
 --db-config=path   : 数据库服务器配置项目路径，如不配置为项目同目录下的conf内
---result-path=path : 业务处理配置文件
+--profession-config:业务处理配置文件
+--result-path=path : 结果文件路径
+
 
 更多帮助：https://github.com/guohai163/jdoka/wiki""")
 
@@ -87,13 +89,21 @@ def main():
     arch = Archive(result_path + '/result_data.db')
     while True:
         config.read(mail_config_path)
-        mail = GMail(server=config['mail.config']['imap_server'],
-                     port=config['mail.config']['imap_port'],
-                     user=config['mail.config']['user'],
-                     password=config['mail.config']['password'],
-                     box=config['mail.config']['box'],
-                     smtp_server=config['mail.config']['smtp_server'],
-                     smtp_port=config['mail.config']['smtp_port'])
+        try:
+            server = config['mail.config']['imap_server']
+            port = config['mail.config']['imap_port']
+            user = config['mail.config']['user']
+            password = config['mail.config']['password']
+            if config.has_option('mail.config', 'box'):
+                box = config['mail.config']['box']
+            else:
+                box = ''
+            smtp_server = config['mail.config']['smtp_server']
+            smtp_port = config['mail.config']['smtp_port']
+        except KeyError as err:
+            LOG.error('请检查邮件配置文件%s。\n%s', mail_config_path, str(err))
+            sys.exit(1)
+        mail = GMail(server, port, user, password, box, smtp_server, smtp_port)
 
         LOG.debug('开始接收邮件')
         mail.parse()

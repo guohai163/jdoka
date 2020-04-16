@@ -108,6 +108,17 @@ class DOperating:
                 'server'] + ';DATABASE=' + database + ';UID=' + self.__db_config[database]['user'] + ';PWD=' +
             self.__db_config[database]['password'])
         cursor = db_conn.cursor()
+        cursor.execute(sql)
+        result_path = self._write_xlsx(cursor)
+        db_conn.close()
+        return result_path
+
+    def _write_xlsx(self, cursor):
+        """
+        写XLMS
+        :param cursor:
+        :return:
+        """
         result_dir = '%s/%d/%d' % (self.__result_save_path, datetime.datetime.now().year, datetime.datetime.now().month)
         if not os.path.exists(result_dir):
             LOG.debug('路径%s不存在，准备创建', result_dir)
@@ -115,7 +126,6 @@ class DOperating:
         path = result_dir + '/' + str(uuid.uuid1()) + '.xlsx'
         workbook = xlsxwriter.Workbook(path)
         worksheet = workbook.add_worksheet()
-        cursor.execute(sql)
         # i和j循环使用表示excel的横和列坐标用
         i = 1
         j = 0
@@ -129,5 +139,4 @@ class DOperating:
                 j += 1
             i += 1
         workbook.close()
-        db_conn.close()
         return path
