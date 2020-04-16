@@ -100,7 +100,7 @@ class DOperating:
         :return: 结果文件路径
         """
         if self.__db_config[database]['drive'] not in DB_TYPE:
-            LOG.error('数据库类型[%s]不被支持，请看说明文档',self.__db_config[database]['drive'])
+            LOG.error('数据库类型[%s]不被支持，请看说明文档', self.__db_config[database]['drive'])
             return None
 
         db_conn = pyodbc.connect(
