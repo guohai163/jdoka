@@ -26,19 +26,3 @@ def idcard_query(profession_config, parm):
                         where a.account in ('%s')""" % '\',\''.join(accounts)
         LOG.debug(sql)
     return sql
-
-
-def batch_query(profession_config, parm):
-    """
-    批号查询，多参数演示
-    :param profession_config: 配置
-    :param parm: 参数
-    :return:
-    """
-    min_code = re.search(r'min_code:([^\r\n]+)', parm['body'])
-    max_code = re.search(r'max_code:([^\r\n]+)', parm['body'])
-    if min_code is None or max_code is None:
-        return None
-    sql = "SELECT * FROM vaccine_batch_tb where code>%s and code<%s" % (min_code.group(1), max_code.group(1))
-    LOG.debug(sql)
-    return sql

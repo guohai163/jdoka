@@ -1,5 +1,7 @@
 # -*- coding:utf8 -*-
 import configparser
+import re
+
 import log4p
 import uuid
 import xlsxwriter
@@ -51,7 +53,10 @@ class DOperating:
         # 准备开始调用
         if self.__profession_config.has_option(parm['subject'], 'sql'):
             # 如果业务配置项中有sql属性，直接执行sql语句
-            sql = self.__profession_config[parm['subject']]['sql']
+            sql = self._with_sql_attribut(parm)
+            if sql is None:
+                return None
+            # sql = self.__profession_config[parm['subject']]['sql']
             return self._exec_sql_use_odbc(sql, self.__profession_config[parm['subject']]['database'])
         # 反射方法
         if hasattr(sqlscript, self.__profession_config[parm['subject']]['funname']):
@@ -143,3 +148,23 @@ class DOperating:
             i += 1
         workbook.close()
         return path
+
+    def _with_sql_attribut(self, mail_parm):
+        """
+        为有sql属性的配置进行参数解析
+        :param mail_parm: 邮件内参数
+        :return: 返回SQL语句
+        """
+        config_sql = self.__profession_config[mail_parm['subject']]['sql']
+        if self.__profession_config.has_option(mail_parm['subject'], 'sqlparm'):
+            parm = self.__profession_config[mail_parm['subject']]['sqlparm'].split()
+            LOG.debug('sql语句携带了参数 %s', parm)
+            sqlparm = [re.search(reparm, mail_parm['body']).group(1) for reparm in parm]
+            try:
+                sql = config_sql.format(sqlparm)
+            except IndexError as err:
+                LOG.error('请节点[%s]检查配置项目:\n%s', mail_parm['subject'], str(err))
+                return None
+            return sql
+        else:
+            return config_sql
