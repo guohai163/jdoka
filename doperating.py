@@ -128,15 +128,18 @@ class DOperating:
         worksheet = workbook.add_worksheet()
         # i和j循环使用表示excel的横和列坐标用
         i = 1
-        j = 0
-        for desc in cursor.description:
-            worksheet.write(0, j, desc[0])
-            j += 1
+        for j in range(len(cursor.description)):
+            worksheet.write(0, j, cursor.description[j][0])
+
         for row in cursor:
-            j = 0
-            for col in row:
-                worksheet.write(i, j, col)
-                j += 1
+            for j in range(len(row)):
+                if type(row[j]) in (datetime.datetime,
+                                    datetime.date,
+                                    datetime.time,
+                                    datetime.timedelta):
+                    worksheet.write_datetime(i, j, row[j], workbook.add_format({'num_format': 'yyyy-mm-dd hh:mm:ss'}))
+                else:
+                    worksheet.write(i, j, row[j])
             i += 1
         workbook.close()
         return path
