@@ -12,28 +12,59 @@
 
 ## 目前实现的功能
 
-1. 对于简单的无参数查询，只要配置一个业务配置项目写好sql即可，5分钟即可完成书写到测试上线
-2. 对于相对复杂的需要参数的查询，可以通过反射方法，增加sqlscript.py里的方法进行各种复杂查询
+1. 对于简单的无参数或少量参数的查询，只要更新配置文件写好sql即可，5分钟即可完成配置到上线
+2. 对于相对复杂的需要个性定制的查询，可以通过反射方法，增加sqlscript.py里的方法进行各种复杂查询
 3. 白名单功能，如果配置了白名单参数，只有在白名单里的发件人查询才会进行回复
+4. 查询结果使用xlsx格式作为附件发给查询发起者邮箱
+5. 查询结果存档，使用sqlite格式，存档目录在 result/result_data.db 中
 
 ## 安装
-测试使用推荐使用docker环境，可以省去odbc安装的繁琐过程。
-首先准备好conf目录下的三个配置文件，可以参考该目录下的三个示例文件进行配置。我们看一下每次新增加业务时要配置的业务处理文件，主要就是把写好的SQL放进去即可
-~~~ ini
-[昨日注册人数]
-# 查询脚本
-sql = SELECT count(*) as yday_reg_num  FROM [community_login_log] WHERE DateDiff(dd,login_time,getdate())=1
-# 要使用的DB，会去db-config.ini进行搜索
-database = accountdb_log
-# 非必须参数，白名单。
-whitelist = guohai@gmail.com
-~~~
+初次使用推荐使用docker环境，可以省去odbc安装的繁琐过程。如果需要支持mssql、mysql以外的数据库，目前推荐使用源码方式。
+首先准备好conf目录下的三个配置文件，可以参考该目录下的三个示例文件进行配置。我们看一下具体的配置方法
 
-如果想实现自定义参数等高级功能，更详细的配置说明可以看 [这里](https://github.com/guohai163/jdoka/wiki/ConfigurationFile) 。将mail-config.ini、db-config.ini、profession.conf存放在同一个目录下。比如我们放在了本地/home/jdoka/conf/
+### 不带参数的sql查询配置指导
+1. 打开 conf/mail-config.ini 文件
+    ~~~ ini
+    # 邮箱配置，目前国内的邮件服务商大多都使用基于SSL协议的SMTP或IMAP。目前本程序也是基于SSL协议的
+    [mail.config]
+    imap_server = imap.exmail.qq.com
+    imap_port = 993
+    user = <email_username>
+    password = <email_password>
+    # 邮箱盒，如果不设置使用默认收件箱
+    box = <directory>
+    smtp_server = smtp.exmail.qq.com
+    smtp_port = 465
+    ~~~
+2. 打开 conf/profession.conf 文件
+    ~~~ ini
+    # 方括号内为你要用的业务名，也是需求方要发的邮件标题
+    [昨日注册人数]
+    # 查询脚本
+    sql = SELECT count(*) as yday_reg_num  FROM account_login_log WHERE DateDiff(dd,login_time,getdate())=1
+    # 要使用的DB，会去db-config.ini进行搜索
+    database = accountdb-log
+    # 自定义参数，白名单。只有白名单内用户发信才进行查询。如无该字段不限制发件人
+    whitelist = guohai@gmail.com
+    ~~~
+3. 打开 conf/db-config.ini 看一下上步操作时使用的DB在本文件是否有，如果不存在需要新建一个节点
+    ~~~ ini
+    # 方括号内要与上一步一致
+    [AccountDB-Log]
+    # 服务器IP
+    server = 10.0.0.1
+    user = <user>
+    password = xxxxxxxxxx
+    # 数据库类型，目前支持 mssql或mysql
+    drive = mssql
+    ~~~
+
+将mail-config.ini、db-config.ini、profession.conf存放在同一个目录下。比如我们放在了本地/home/jdoka/conf/
 
 启动docker容器
 ~~~ bash
-shell> docker run --rm -v /home/jdoka/conf/:/opt/jdoka/conf/ gcontainer/jdoka:1.0
+# 推荐把结果目录也保存到本地，方便后续的跟踪
+shell> docker run --rm -v /home/user/conf/:/opt/jdoka/conf/ -v /home/user/result/:/opt/jdoka/result/ gcontainer/jdoka:1.1
 
 2020-04-14 06:46:02,579 - gmail.py line+30 - INFO - init GMail class
 2020-04-14 06:46:03,505 - gmail.py line+41 - INFO - 邮箱登录成功
