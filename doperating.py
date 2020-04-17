@@ -1,18 +1,23 @@
 # -*- coding:utf8 -*-
 import configparser
 import re
+from importlib import import_module
+from importlib.util import find_spec
 
 import log4p
 import uuid
 import xlsxwriter
 import pyodbc
-import sqlscript
 import datetime
 import os
 
 LOG = log4p.GetLogger('DOperating').logger
 
+# 程序目前支持的数据类型
 DB_TYPE = {'mssql': 'ODBC Driver 17 for SQL Server', 'mysql': 'MySQL ODBC 8.0 Driver'}
+
+# 客制化模块的包名
+CUSTOM_PACKAGE = 'customized'
 
 
 class DOperating:
@@ -50,33 +55,39 @@ class DOperating:
         if not self._check_white_list(parm):
             LOG.error('[%s]<%s>白名单检查未通过', parm['subject'], parm['messageid'])
             return None
-        # 准备开始调用
+        # 当直接包含SQL时
         if self.__profession_config.has_option(parm['subject'], 'sql'):
             # 如果业务配置项中有sql属性，直接执行sql语句
             sql = self._with_sql_attribut(parm)
-            if sql is None:
-                return None
-            # sql = self.__profession_config[parm['subject']]['sql']
+
+        # 当包含module时
+        if self.__profession_config.has_option(parm['subject'], 'module'):
+            sql = self._with_module_attribut(parm)
+
+        if sql is None:
+            return None
+        try:
             return self._exec_sql_use_odbc(sql, self.__profession_config[parm['subject']]['database'])
-        # 反射方法
-        if hasattr(sqlscript, self.__profession_config[parm['subject']]['funname']):
-            LOG.debug('方法%s反射成功', self.__profession_config[parm['subject']]['funname'])
-            pro_func = getattr(sqlscript, self.__profession_config[parm['subject']]['funname'])
-            try:
-                sql = pro_func(self.__profession_config, parm)
-            except Exception as err:
-                LOG.error('自定义方法[%s]发生异常:\n%s', self.__profession_config[parm['subject']]['funname'], str(err))
-                sql = None
-            if sql is None:
-                LOG.error('返回的sql为空')
-                return None
-            else:
-                result_file = self._exec_sql_use_odbc(sql, self.__profession_config[parm['subject']]['database'])
-        else:
-            LOG.error('未实现方法:%s', self.__profession_config[parm['subject']]['funname'])
+        except Exception as err:
+            LOG.error('执行SQL时发生错误[%s]\n%s', sql, str(err))
             return None
 
-        return result_file
+    def _with_module_attribut(self, mail_parm):
+        """
+        使用用户自定义模块内方法
+        :param mail_parm:
+        :return:
+        """
+        module_name = ".%s" % self.__profession_config[mail_parm['subject']]['module']
+        if find_spec(module_name, CUSTOM_PACKAGE) is None:
+            LOG.error('<%s>自定义邮件，模块名[]没有找到，请检查配置', mail_parm['messageid'], module_name)
+            return None
+        custom = import_module(module_name, package=CUSTOM_PACKAGE)
+        try:
+            return custom.make_sql(self.__profession_config, mail_parm)
+        except AttributeError as err:
+            LOG.error('自定义业务[%s]没有实现make_sql方法，请检查', mail_parm['subject'])
+            return None
 
     def _check_white_list(self, parm):
         """

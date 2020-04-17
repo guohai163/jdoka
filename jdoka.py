@@ -3,6 +3,7 @@ import getopt
 import os
 import sys
 import time
+import psutil
 
 from archive import Archive
 from doperating import DOperating
@@ -10,7 +11,10 @@ from gmail import GMail
 import configparser
 import log4p
 
+
 LOG = log4p.GetLogger('__main__').logger
+
+CACHE_PATH = 'cache/'
 
 
 def usage():
@@ -83,8 +87,56 @@ def get_parm(parm):
     return mail_config, db_config, profession_config, result_path, sleep_time, loop
 
 
+def check_pid():
+    """
+    检查当前程序是否有多分在同时运行，如果有为了防止重复处理邮件，需要进入安全模式
+    :return:
+    """
+    my_pid = os.getpid()
+    for process in psutil.process_iter(['pid', 'name', 'cmdline']):
+        if 'Python' == process.info['name']:
+            is_jdoka_process = False
+            for cmd_parm in process.info['cmdline']:
+                if 'jdoka' in cmd_parm:
+                    is_jdoka_process = True
+                    break
+            if is_jdoka_process:
+                if my_pid != process.info['pid']:
+                    LOG.debug('jdoka有多份同时打开，需要使用安全模式')
+                    if not os.path.exists(CACHE_PATH):
+                        # 打开邮件处理中检查。建立检查目录
+                        os.makedirs(CACHE_PATH)
+                    return True
+    # 当前程序只打开了一份
+    return False
+
+
+def check_cache(message_id):
+    """
+    检查邮件是否为处理中
+    :param message_id: 邮件唯一编号
+    :return: 可以处理返回True, 有其它进程在处理中False
+    """
+    if os.path.exists(CACHE_PATH + message_id):
+        return False
+    else:
+        open(CACHE_PATH + message_id, 'w').close()
+        return True
+
+
+def delete_cache(message_id):
+    """
+    邮件处理完后删除cache
+    :param message_id: 邮件唯一编号
+    :return:
+    """
+    if os.path.exists(CACHE_PATH + message_id):
+        os.remove(CACHE_PATH + message_id)
+
+
 def main():
     mail_config_path, db_config_path, profession_config_path, result_path, sleep_time, loop = get_parm(sys.argv[1:])
+    safe_mode = check_pid()
     config = configparser.ConfigParser()
     arch = Archive(result_path + '/result_data.db')
     while True:
@@ -113,6 +165,8 @@ def main():
 
             while mail.query_list:
                 query = mail.query_list.pop()
+                if safe_mode and not check_cache(query['messageid']):
+                    continue
                 result = work.query(parm=query)
                 if result is None:
                     LOG.info('邮件<%s>查询无结果', query['messageid'])
@@ -121,6 +175,8 @@ def main():
                     arch.add_data(query, result)
                     mail.send_mail(query['from'], query['subject'].replace('[q]', '') + '结果', result)
                     mail.delete(query['num'])
+                if safe_mode:
+                    delete_cache(query['messageid'])
 
         LOG.debug('本次处理结束')
         mail.over()

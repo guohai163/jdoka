@@ -1,10 +1,11 @@
+# -*- coding:utf8 -*-
 import re
 import log4p
 
-LOG = log4p.GetLogger('DOperating').logger
+LOG = log4p.GetLogger('customized').logger
 
 
-def idcard_query(profession_config, parm):
+def make_sql(profession_config, parm):
     """
     身份证查询
     :param profession_config: profession配置文件
