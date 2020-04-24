@@ -17,10 +17,12 @@
 3. 白名单功能，如果配置了白名单参数，只有在白名单里的发件人查询才会进行回复
 4. 查询结果使用xlsx格式作为附件发给查询发起者邮箱
 5. 查询结果存档，使用sqlite格式，存档目录在 result/result_data.db 中
+6. 目前接收查询需求的邮箱需要支持IMAP协议，可以配置目录。只处理指定目录用的邮件，不与正常使用者冲突。
+7. 所有查询邮件的标题必须以[q]开头
 
 ## 安装
 初次使用推荐使用docker环境，可以省去odbc安装的繁琐过程。如果需要支持mssql、mysql以外的数据库，目前推荐使用源码方式。
-首先准备好conf目录下的三个配置文件，可以参考该目录下的三个示例文件进行配置。我们看一下具体的配置方法
+我们先来讲解基于docker的使用方法。首先准备好conf目录下的三个配置文件，可以参考[github仓库中](https://github.com/guohai163/jdoka/tree/master/conf)该目录下的三个示例文件进行配置。我们看一下具体的配置方法：
 
 ### 不带参数的sql查询配置指导
 1. 打开 conf/mail-config.ini 文件
@@ -64,16 +66,20 @@
 启动docker容器
 ~~~ bash
 # 推荐把结果目录也保存到本地，方便后续的跟踪
-shell> docker run --rm -v /home/user/conf/:/opt/jdoka/conf/ -v /home/user/result/:/opt/jdoka/result/ gcontainer/jdoka:1.1
+# 我们把本地的配置文件目录和结果目录映射到Docker容器内
+shell> docker run --rm -v /home/user/conf/:/opt/jdoka/conf/ -v /home/user/result/:/opt/jdoka/result/ gcontainer/jdoka:1.2
 
 2020-04-14 06:46:02,579 - gmail.py line+30 - INFO - init GMail class
 2020-04-14 06:46:03,505 - gmail.py line+41 - INFO - 邮箱登录成功
 2020-04-14 06:46:03,758 - gmail.py line+46 - INFO - 所有邮件数量:0
 2020-04-14 06:46:04,138 - jdoka.py line+106 - INFO - 本次查询结束，休眠5分钟
 ~~~
-看到如上提示，代表服务启动成功。我们按配置好的示例发封邮件试试。为了方便搜索，我们需要在查询的的邮件标题前加上[q]来和普通邮件进行区分。
+看到如上提示，代表服务启动成功。我们按配置好的示例发封邮件试试。邮件标题"[q]昨日注册人数"，收件人为第一步中配置的邮箱账号。点击发送一会结果就会回来，全程不再需要人工干预。
 
 ![mail2result.png](https://raw.githubusercontent.com/wiki/guohai163/jdoka/img/mail2result.png)
+
+### 带简单参数的查询配置方法
+
 
 ## 源码安装
 
