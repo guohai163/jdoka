@@ -35,7 +35,7 @@ class DOperating:
         self.__db_config = configparser.ConfigParser()
         self.__db_config.read(dbconfig_path)
 
-        self.__profession_config = configparser.ConfigParser()
+        self.__profession_config = configparser.ConfigParser(strict=False)
         self.__profession_config.read(proconfig_path)
 
         self.__result_save_path = result_save_path
@@ -48,6 +48,7 @@ class DOperating:
         """
         LOG.debug('拉收到参数%s', parm)
         parm['subject'] = parm['subject'].replace('[q]', '')
+        sql = None
         if not self.__profession_config.has_section(parm['subject']):
             LOG.error('指定业务[%s]配置节点不存在，请处理！', parm['subject'])
             return None
