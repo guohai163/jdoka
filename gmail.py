@@ -15,6 +15,17 @@ LOG = log4p.GetLogger('GMail').logger
 
 VERSION = '1.0'
 
+MAIL_HTML = """
+<html>
+  <head></head>
+  <body>
+    <p>{0}，你好：
+        <p style=\"text-indent: 2em;\">查询结果见附件</p>
+        <p style=\"text-indent: 10em;\"><a href=\"https://github.com/guohai163/jdoka\" target=\"view_window\">jdoka</a>.</p>
+    </p>
+  </body>
+</html>
+"""
 
 class GMail:
     # TODO:类需要进行重构，需要使用smtp时再进行连接，否则会超时
@@ -133,7 +144,8 @@ class GMail:
         msg['Subject'] = Header(subject, 'utf-8').encode()
         msg['Jdoka-Version'] = VERSION
         msg['Jdoka-Url'] = 'https://github.com/guohai163/jdoka'
-        msg.attach(MIMEText('查询结果见附件', 'plain', 'utf-8'))
+        # msg.attach(MIMEText('查询结果见附件', 'plain', 'utf-8'))
+        msg.attach(MIMEText(MAIL_HTML.format(to_mail), 'html', 'utf-8'))
 
         with open(attach_path, 'rb') as f:
             mime = MIMEBase('text/csv', 'csv', filename='query_result.csv')
