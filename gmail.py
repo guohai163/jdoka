@@ -144,8 +144,7 @@ class GMail:
         msg['Subject'] = Header(subject, 'utf-8').encode()
         msg['Jdoka-Version'] = VERSION
         msg['Jdoka-Url'] = 'https://github.com/guohai163/jdoka'
-        # msg.attach(MIMEText('查询结果见附件', 'plain', 'utf-8'))
-        msg.attach(MIMEText(MAIL_HTML.format(to_mail), 'html', 'utf-8'))
+        msg.attach(MIMEText(MAIL_HTML.format(to_mail.split('@')[0]), 'html', 'utf-8'))
 
         with open(attach_path, 'rb') as f:
             mime = MIMEBase('text/csv', 'csv', filename='query_result.csv')
