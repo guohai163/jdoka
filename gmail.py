@@ -85,7 +85,8 @@ class GMail:
         return str(data, charset), mail_from, message_id, mail_date
 
     def _parse_part_to_str(self, part):
-        charset = part.get_charset() or 'gb2312'
+        charset = part.get_charset() or part.get_param('charset') or 'gb2312'
+
         payload = part.get_payload(decode=True)
         if not payload:
             return
