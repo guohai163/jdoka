@@ -35,7 +35,7 @@ class DOperating:
         self.__db_config = configparser.ConfigParser()
         self.__db_config.read(dbconfig_path)
 
-        self.__profession_config = configparser.ConfigParser(strict=False)
+        self.__profession_config = configparser.RawConfigParser(strict=False)
         self.__profession_config.read(proconfig_path)
 
         self.__result_save_path = result_save_path
@@ -48,7 +48,7 @@ class DOperating:
         """
         LOG.debug('拉收到参数%s', parm)
         parm['subject'] = parm['subject'].replace('[q]', '')
-        sql = None
+        sql = {}
         if not self.__profession_config.has_section(parm['subject']):
             LOG.error('指定业务[%s]配置节点不存在，请处理！', parm['subject'])
             return None
@@ -59,7 +59,7 @@ class DOperating:
         # 当直接包含SQL时
         if self.__profession_config.has_option(parm['subject'], 'sql'):
             # 如果业务配置项中有sql属性，直接执行sql语句
-            sql = self._with_sql_attribut(parm)
+            sql["data"] = self._with_sql_attribut(parm)
 
         # 当包含module时
         if self.__profession_config.has_option(parm['subject'], 'module'):
@@ -125,24 +125,38 @@ class DOperating:
                 'server'] + ';DATABASE=' + database + ';UID=' + self.__db_config[database]['user'] + ';PWD=' +
             self.__db_config[database]['password'])
         cursor = db_conn.cursor()
-        cursor.execute(sql)
-        result_path = self._write_xlsx(cursor)
+        result_path = None
+        workbook_obj = None
+        sql_len = len(sql)
+        for sql_key, sql_val in sql.items():
+            cursor.execute(sql_val)
+            sql_len = sql_len - 1
+            if sql_len == 0:
+                result_path, workbook_obj = self._write_xlsx(cursor, workbook_obj, result_path, True, sql_key)
+            else:
+                result_path, workbook_obj = self._write_xlsx(cursor, workbook_obj, result_path, False, sql_key)
+
         db_conn.close()
         return result_path
 
-    def _write_xlsx(self, cursor):
+    def _write_xlsx(self, cursor, workbook_obj, path, is_close_xlsx, sql_key):
         """
         写XLMS
         :param cursor:
         :return:
         """
-        result_dir = '%s/%d/%d' % (self.__result_save_path, datetime.datetime.now().year, datetime.datetime.now().month)
-        if not os.path.exists(result_dir):
-            LOG.debug('路径%s不存在，准备创建', result_dir)
-            os.makedirs(result_dir)
-        path = result_dir + '/' + str(uuid.uuid1()) + '.xlsx'
-        workbook = xlsxwriter.Workbook(path)
-        worksheet = workbook.add_worksheet()
+        if None is workbook_obj:
+            result_dir = '%s/%d/%d' % (
+                self.__result_save_path, datetime.datetime.now().year, datetime.datetime.now().month)
+            if not os.path.exists(result_dir):
+                LOG.debug('路径%s不存在，准备创建', result_dir)
+                os.makedirs(result_dir)
+            path = result_dir + '/' + str(uuid.uuid1()) + '.xlsx'
+            workbook = xlsxwriter.Workbook(path)
+        else:
+            workbook = workbook_obj
+
+        worksheet = workbook.add_worksheet(sql_key)
         # i和j循环使用表示excel的横和列坐标用
         i = 1
         for j in range(len(cursor.description)):
@@ -158,8 +172,9 @@ class DOperating:
                 else:
                     worksheet.write(i, j, row[j])
             i += 1
-        workbook.close()
-        return path
+        if is_close_xlsx:
+            workbook.close()
+        return path, workbook
 
     def _with_sql_attribut(self, mail_parm):
         """
