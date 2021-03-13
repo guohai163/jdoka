@@ -89,7 +89,7 @@ class GMail:
 
         payload = part.get_payload(decode=True)
         if not payload:
-            return
+            return ''
         return str(part.get_payload(decode=True), charset)
 
     def _parse_body(self, msg):
