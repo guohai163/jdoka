@@ -90,7 +90,7 @@ class GMail:
         payload = part.get_payload(decode=True)
         if not payload:
             return ''
-        return str(part.get_payload(decode=True), charset)
+        return str(part.get_payload(decode=True), charset).replace("&nbsp;", " ")
 
     def _parse_body(self, msg):
         mail_body = ''

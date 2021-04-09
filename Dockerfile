@@ -21,19 +21,24 @@ RUN wget https://dev.mysql.com/get/Downloads/Connector-ODBC/8.0/mysql-connector-
     myodbc-installer -d -l && \
     rm -rf /tmp/*
 
+RUN apt-get -y update && \
+    apt-get -y install cron
 WORKDIR /opt/jdoka
 
 COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 COPY docker-entrypoint.sh /usr/local/bin/
 COPY log4p.json /usr/local/lib/python3.7/site-packages/log4p/log4p.json
 
 COPY *.py ./
-RUN mkdir /opt/jdoka/logs
+RUN mkdir /opt/jdoka/logs && \
+    mkdir /root/logs
 
 RUN sed -i 's/TLSv1.2/TLSv1.0/g' /etc/ssl/openssl.cnf
 
-ENTRYPOINT ["docker-entrypoint.sh"]
+#ENTRYPOINT ["docker-entrypoint.sh"]
+#
+#CMD ["python", "/opt/jdoka/jdoka.py", "-l"]
 
-CMD ["python", "/opt/jdoka/jdoka.py", "-l"]
+CMD cron && python3 /opt/jdoka/cron.py --init

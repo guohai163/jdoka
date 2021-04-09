@@ -103,9 +103,10 @@ class DOperating:
             return True
 
         whitelist = self.__profession_config[parm['subject']]['whitelist']
-        if whitelist.find(parm['from'], 0, len(whitelist)) == -1:
-            LOG.debug('查询人不在白名单中，请检查 %s', parm['subject'])
-            return False
+        for from_mail in parm['from'].split(','):
+            if whitelist.find(from_mail.replace(' ', ''), 0, len(whitelist)) == -1:
+                LOG.debug('查询人不在白名单中，请检查 %s', parm['subject'])
+                return False
 
         return True
 
