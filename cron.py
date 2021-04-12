@@ -4,7 +4,10 @@ import getopt
 import os
 import sys
 import time
+import tornado.ioloop
+import tornado.web
 
+import httpserver
 import log4p
 from crontab import CronTab
 
@@ -71,6 +74,15 @@ def send_data(task):
         smtp_port = mail_config['mail.config']['smtp_port']
         mail = GMail(server, port, user, password, box, smtp_server, smtp_port)
         mail.send_mail(query['from'], query['subject'].replace('[q]', '') + '结果', result)
+
+
+def make_app():
+    return tornado.web.Application([
+        ('/', httpserver.MainHandler),
+        ('/stop', httpserver.StopDataHandler),
+        (r"/conf/(.*)", tornado.web.StaticFileHandler, dict(path=os.path.join(os.path.dirname(__file__), "conf")))
+    ])
+
 def main():
     LOG.info('进入方法main: %s' % sys.argv[1:])
     try:
@@ -79,11 +91,15 @@ def main():
         print(str(err))
         sys.exit(2)
     for o, a in optlist:
-        if o in ('-h', '--init'):
+        if o in ('-i', '--init'):
             init_cron_task()
             # 驻留后台
-            while True:
-                time.sleep(5)
+            app = make_app()
+            server_port = 80
+            print('webserver listen start port %s' % server_port)
+            app.listen(server_port)
+
+            tornado.ioloop.IOLoop.current().start()
         elif o == '--task':
 
             send_data(a)

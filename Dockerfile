@@ -33,7 +33,8 @@ COPY log4p.json /usr/local/lib/python3.7/site-packages/log4p/log4p.json
 
 COPY *.py ./
 RUN mkdir /opt/jdoka/logs && \
-    mkdir /root/logs
+    mkdir /root/logs && \
+    ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
 RUN sed -i 's/TLSv1.2/TLSv1.0/g' /etc/ssl/openssl.cnf
 

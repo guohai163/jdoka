@@ -4,3 +4,4 @@ log4p==2019.7.13.3
 
 psutil==5.7.0
 python-crontab==2.5.1
+tornado~=6.0.4

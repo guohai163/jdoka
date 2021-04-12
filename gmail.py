@@ -161,6 +161,6 @@ class GMail:
         except smtplib.SMTPAuthenticationError as e:
             LOG.error("smtp登录失败: %s" % e)
             return
-        smtp_conn.sendmail(from_addr=self._user, to_addrs=to_mail, msg=msg.as_string())
+        smtp_conn.sendmail(from_addr=self._user, to_addrs=to_mail.split(","), msg=msg.as_string())
         smtp_conn.quit()
 
