@@ -30,6 +30,11 @@ def init_cron_task():
     config.read(CRON_CONFIG_PATH)
     print(config.sections())
     cron_manager = CronTab(user=True)
+    # 写正常的定时任务，3分钟一次查询邮件
+    mail_job = cron_manager.new(
+        command='/usr/local/bin/python3 %s/jdoka.py >> /var/log/jdoka.log 2>&1' % BASE_DIR)
+    mail_job.setall('*/5 * * * *')
+    cron_manager.write()
     for cron_sect in config.sections():
         print(config[cron_sect]['time'])
         job = cron_manager.new(
