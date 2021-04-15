@@ -16,6 +16,7 @@ LOG = log4p.GetLogger('__main__').logger
 
 CACHE_PATH = 'cache/'
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def usage():
     """
@@ -43,10 +44,10 @@ def get_parm(parm):
     :return:
     """
     sleep_time = 5
-    mail_config = 'conf/mail-config.ini'
-    db_config = 'conf/db-config.ini'
-    profession_config = 'conf/profession.conf'
-    result_path = 'result'
+    mail_config = '%s/conf/mail-config.ini' % BASE_DIR
+    db_config = '%s/conf/db-config.ini' % BASE_DIR
+    profession_config = '%s/conf/profession.conf' % BASE_DIR
+    result_path = '%s/result' % BASE_DIR
     loop = False
     try:
         optlist, args = getopt.getopt(parm, 'hlt:', ['mail-config=', 'db-config=', 'result-path=',
