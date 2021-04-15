@@ -85,7 +85,8 @@ def make_app():
     return tornado.web.Application([
         ('/', httpserver.MainHandler),
         ('/stop', httpserver.StopDataHandler),
-        (r"/conf/(.*)", tornado.web.StaticFileHandler, dict(path=os.path.join(os.path.dirname(__file__), "conf")))
+        ('/conf', httpserver.ConfigHandler)
+        # (r"/conf/(.*)", tornado.web.StaticFileHandler, dict(path=os.path.join(os.path.dirname(__file__), "conf")))
     ])
 
 def main():
