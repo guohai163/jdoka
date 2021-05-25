@@ -187,9 +187,13 @@ class DOperating:
         if self.__profession_config.has_option(mail_parm['subject'], 'sqlparm'):
             parm = self.__profession_config[mail_parm['subject']]['sqlparm'].split()
             LOG.debug('sql语句携带了参数 %s', parm)
-            sqlparm = [re.search(reparm, mail_parm['body']).group(1) for reparm in parm]
             try:
-                sql = config_sql.format(sqlparm)
+                sql_parm = [re.search(reparm, mail_parm['body']).group(1) for reparm in parm]
+            except Exception as err:
+                LOG.error('邮件内参数匹配异常:\n%s', str(err))
+                return None
+            try:
+                sql = config_sql.format(sql_parm)
             except IndexError as err:
                 LOG.error('请节点[%s]检查配置项目:\n%s', mail_parm['subject'], str(err))
                 return None
