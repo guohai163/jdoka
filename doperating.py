@@ -125,11 +125,13 @@ class DOperating:
             'DRIVER={' + DB_TYPE[self.__db_config[database]['drive']] + '};SERVER=' + self.__db_config[database][
                 'server'] + ';DATABASE=' + database + ';UID=' + self.__db_config[database]['user'] + ';PWD=' +
             self.__db_config[database]['password'])
+        db_conn.timeout = 60 * 3
         cursor = db_conn.cursor()
         result_path = None
         workbook_obj = None
         sql_len = len(sql)
         for sql_key, sql_val in sql.items():
+            LOG.info('待执行SQL为:%s' % sql_val)
             cursor.execute(sql_val)
             sql_len = sql_len - 1
             if sql_len == 0:
