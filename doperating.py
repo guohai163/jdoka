@@ -125,7 +125,7 @@ class DOperating:
             'DRIVER={' + DB_TYPE[self.__db_config[database]['drive']] + '};SERVER=' + self.__db_config[database][
                 'server'] + ';DATABASE=' + database + ';UID=' + self.__db_config[database]['user'] + ';PWD=' +
             self.__db_config[database]['password'])
-        db_conn.timeout = 60 * 3
+
         cursor = db_conn.cursor()
         result_path = None
         workbook_obj = None
