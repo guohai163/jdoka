@@ -175,8 +175,9 @@ class DOperating:
                 else:
                     worksheet.write(i, j, row[j])
             i += 1
-        workbook.close()
-        return path
+        if is_close_xlsx:
+            workbook.close()
+        return path, workbook
 
     def _with_sql_attribut(self, mail_parm):
         """
@@ -188,8 +189,11 @@ class DOperating:
         if self.__profession_config.has_option(mail_parm['subject'], 'sqlparm'):
             parm = self.__profession_config[mail_parm['subject']]['sqlparm'].split()
             LOG.debug('sql语句携带了参数 %s', parm)
-            sql_parm = [re.search(reparm, mail_parm['body']).group(1) for reparm in parm]
-            # sql_parm = [re.sub('<[^>]+>', "", reparm) for reparm in sql_parm]
+            try:
+                sql_parm = [re.search(reparm, mail_parm['body']).group(1) for reparm in parm]
+            except Exception as err:
+                LOG.error('邮件内参数匹配异常:\n%s', str(err))
+                return None
             try:
                 sql = config_sql.format(sql_parm)
             except IndexError as err:
