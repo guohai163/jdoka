@@ -94,6 +94,7 @@ class GMail:
 
     def _parse_body(self, msg):
         mail_body = ''
+        LOG.info(msg.get_body(preferencelist=('plain', 'html')))
         for part in msg.walk():
             if not part.is_multipart():
                 name = part.get_param("name")
