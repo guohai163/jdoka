@@ -90,11 +90,13 @@ class GMail:
         payload = part.get_payload(decode=True)
         if not payload:
             return ''
+        if sys.getsizeof(payload) <= 34:
+            return ''
         return str(part.get_payload(decode=True), charset).replace("&nbsp;", " ")
 
     def _parse_body(self, msg):
         mail_body = ''
-        LOG.info(msg.get_body(preferencelist=('plain', 'html')))
+
         for part in msg.walk():
             if not part.is_multipart():
                 LOG.info(part)
@@ -117,9 +119,8 @@ class GMail:
                     msg = email.message_from_string(data[0][1].decode())
                     LOG.info(msg)
                     mail_subject, mail_from, message_id, mail_date = self._parse_header(msg)
-                    LOG.info('标题：【%s】从：【%s】ID：【%s】日期：【%s】' % (mail_subject, mail_from, message_id, mail_date))
+
                     mail_body = self._parse_body(msg)
-                    LOG.info(mail_body)
                     query_mail = {'messageid': message_id, 'subject': mail_subject, 'from': mail_from,
                                   'body': mail_body, 'num': num, 'date': mail_date}
                     LOG.debug('收到邮件%s', query_mail['subject'])
