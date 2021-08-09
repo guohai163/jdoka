@@ -189,8 +189,8 @@ class DOperating:
             parm = self.__profession_config[mail_parm['subject']]['sqlparm'].split()
             LOG.debug('sql语句携带了参数 %s', parm)
             sql_parm = [re.search(reparm, mail_parm['body']).group(1) for reparm in parm]
-            pattern = re.compile(r'<[^>]+>')
-            sql_parm = re.sub(pattern, '', sql_parm)
+            LOG.info('sql_Parm: %s', sql_parm)
+
             try:
                 sql = config_sql.format(sql_parm)
             except IndexError as err:
