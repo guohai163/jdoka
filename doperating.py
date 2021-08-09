@@ -191,6 +191,7 @@ class DOperating:
             LOG.debug('sql语句携带了参数 %s', parm)
             try:
                 sql_parm = [re.search(reparm, mail_parm['body']).group(1) for reparm in parm]
+                sql_parm = [re.sub(r'<[^>]+>', "", parm) for parm in sql_parm]
             except Exception as err:
                 LOG.error('邮件内参数匹配异常:\n%s', str(err))
                 return None
