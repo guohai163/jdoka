@@ -82,7 +82,7 @@ class GMail:
         mail_date = email.utils.parsedate_to_datetime(msg['Date'])
         message_id = email.utils.parseaddr(msg['Message-ID'])[1]
         mail_from = email.utils.parseaddr(msg['From'])[1]
-        return str(data, charset), mail_from, message_id, mail_date
+        return str(data, charset).strip(), mail_from, message_id, mail_date
 
     def _parse_part_to_str(self, part):
         charset = part.get_charset() or 'gb2312'

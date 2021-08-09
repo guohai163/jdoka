@@ -170,6 +170,7 @@ def main():
                 result = work.query(parm=query)
                 if result is None:
                     LOG.info('邮件<%s>查询无结果', query['messageid'])
+                    # mail.delete(query['num'])
                 else:
                     LOG.info('查询成功%s', result)
                     arch.add_data(query, result)
