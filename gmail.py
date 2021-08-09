@@ -97,6 +97,7 @@ class GMail:
         LOG.info(msg.get_body(preferencelist=('plain', 'html')))
         for part in msg.walk():
             if not part.is_multipart():
+                LOG.info(part)
                 name = part.get_param("name")
                 if name:
                     fh = email.header.Header(name)
