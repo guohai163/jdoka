@@ -189,10 +189,10 @@ class DOperating:
             parm = self.__profession_config[mail_parm['subject']]['sqlparm'].split()
             LOG.debug('sql语句携带了参数 %s', parm)
             sql_parm = [re.search(reparm, mail_parm['body']).group(1) for reparm in parm]
-            LOG.info('sql_Parm: %s', re.sub(r'<[^>]+>', "", sql_parm))
+            LOG.info('sql_Parm: %s', sql_parm)
 
             try:
-                sql = config_sql.format(re.sub(r'<[^>]+>', "", sql_parm))
+                sql = config_sql.format(sql_parm)
             except IndexError as err:
                 LOG.error('请节点[%s]检查配置项目:\n%s', mail_parm['subject'], str(err))
                 return None
