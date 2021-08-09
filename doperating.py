@@ -191,8 +191,7 @@ class DOperating:
             sql_parm = [re.search(reparm, mail_parm['body']).group(1) for reparm in parm]
             # sql_parm = [re.sub('<[^>]+>', "", reparm) for reparm in sql_parm]
             try:
-                sql = re.sub('<[^>]+>', "", config_sql.format(sql_parm))
-                LOG.info('SQL:%s', sql)
+                sql = config_sql.format(sql_parm)
             except IndexError as err:
                 LOG.error('请节点[%s]检查配置项目:\n%s', mail_parm['subject'], str(err))
                 return None
