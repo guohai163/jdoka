@@ -85,11 +85,12 @@ class GMail:
         return str(data, charset).strip(), mail_from, message_id, mail_date
 
     def _parse_part_to_str(self, part):
-        charset = part.get_charset() or 'gb2312'
+        charset = part.get_charset() or part.get_param('charset') or 'gb2312'
+
         payload = part.get_payload(decode=True)
         if not payload:
-            return
-        return str(part.get_payload(decode=True), charset)
+            return ''
+        return str(part.get_payload(decode=True), charset).replace("&nbsp;", " ")
 
     def _parse_body(self, msg):
         mail_body = ''
@@ -160,6 +161,6 @@ class GMail:
         except smtplib.SMTPAuthenticationError as e:
             LOG.error("smtp登录失败: %s" % e)
             return
-        smtp_conn.sendmail(from_addr=self._user, to_addrs=to_mail, msg=msg.as_string())
+        smtp_conn.sendmail(from_addr=self._user, to_addrs=to_mail.split(","), msg=msg.as_string())
         smtp_conn.quit()
 

@@ -103,9 +103,10 @@ class DOperating:
             return True
 
         whitelist = self.__profession_config[parm['subject']]['whitelist']
-        if whitelist.find(parm['from'], 0, len(whitelist)) == -1:
-            LOG.debug('查询人不在白名单中，请检查 %s', parm['subject'])
-            return False
+        for from_mail in parm['from'].split(','):
+            if whitelist.find(from_mail.replace(' ', ''), 0, len(whitelist)) == -1:
+                LOG.debug('查询人不在白名单中，请检查 %s', parm['subject'])
+                return False
 
         return True
 
@@ -124,7 +125,7 @@ class DOperating:
             'DRIVER={' + DB_TYPE[self.__db_config[database]['drive']] + '};SERVER=' + self.__db_config[database][
                 'server'] + ';DATABASE=' + database + ';UID=' + self.__db_config[database]['user'] + ';PWD=' +
             self.__db_config[database]['password'])
-        db_conn.timeout = 60 * 3
+
         cursor = db_conn.cursor()
         result_path = None
         workbook_obj = None
@@ -188,7 +189,6 @@ class DOperating:
         if self.__profession_config.has_option(mail_parm['subject'], 'sqlparm'):
             parm = self.__profession_config[mail_parm['subject']]['sqlparm'].split()
             LOG.debug('sql语句携带了参数 %s', parm)
-
             try:
                 sql_parm = [re.search(reparm, mail_parm['body']).group(1) for reparm in parm]
             except Exception as err:
