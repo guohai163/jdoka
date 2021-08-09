@@ -189,7 +189,7 @@ class DOperating:
             parm = self.__profession_config[mail_parm['subject']]['sqlparm'].split()
             LOG.debug('sql语句携带了参数 %s', parm)
             sql_parm = [re.search(reparm, mail_parm['body']).group(1) for reparm in parm]
-            sql_parm = [re.sub('<[^>]+>', "", reparm) for reparm in sql_parm]
+            # sql_parm = [re.sub('<[^>]+>', "", reparm) for reparm in sql_parm]
             LOG.info('sql_Parm: %s', sql_parm)
 
             try:
