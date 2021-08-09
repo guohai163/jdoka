@@ -111,8 +111,10 @@ class GMail:
         for num in nums:
             try:
                 result, data = self._imap_conn.fetch(num, '(RFC822)')
+                LOG.info(data)
                 if result == 'OK':
                     msg = email.message_from_string(data[0][1].decode())
+                    LOG.info(msg)
                     mail_subject, mail_from, message_id, mail_date = self._parse_header(msg)
                     mail_body = self._parse_body(msg)
                     query_mail = {'messageid': message_id, 'subject': mail_subject, 'from': mail_from,
