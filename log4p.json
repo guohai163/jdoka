@@ -22,7 +22,7 @@
             "class": "logging.handlers.TimedRotatingFileHandler",
             "level": "DEBUG",
             "formatter": "detail",
-            "filename": "logs/log4p-debug.log",
+            "filename": "/var/log/jdoka-debug.log",
             "when": "D",
             "interval": 1,
             "backupCount": 30,
@@ -33,7 +33,7 @@
             "class": "logging.handlers.RotatingFileHandler",
             "level": "ERROR",
             "formatter": "detail",
-            "filename": "logs/log4p-errors.log",
+            "filename": "/var/log/jdoka-errors.log",
             "maxBytes": 10485760,
             "backupCount": 2,
             "encoding": "utf8"

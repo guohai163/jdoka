@@ -33,7 +33,7 @@ def init_cron_task():
     # 写正常的定时任务，3分钟一次查询邮件
     mail_job = cron_manager.new(
         command='/usr/local/bin/python3 %s/jdoka.py >> /var/log/jdoka.log 2>&1' % BASE_DIR)
-    mail_job.setall('*/5 * * * *')
+    mail_job.setall('*/2 * * * *')
     cron_manager.write()
     for cron_sect in config.sections():
         print(config[cron_sect]['time'])
@@ -84,7 +84,8 @@ def make_app():
     return tornado.web.Application([
         ('/', httpserver.MainHandler),
         ('/stop', httpserver.StopDataHandler),
-        (r"/conf/(.*)", tornado.web.StaticFileHandler, dict(path=os.path.join(os.path.dirname(__file__), "conf")))
+        ('/conf', httpserver.ConfigHandler)
+        # (r"/conf/(.*)", tornado.web.StaticFileHandler, dict(path=os.path.join(os.path.dirname(__file__), "conf")))
     ])
 
 def main():

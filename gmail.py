@@ -85,7 +85,7 @@ class GMail:
         mail_date = email.utils.parsedate_to_datetime(msg['Date'])
         message_id = email.utils.parseaddr(msg['Message-ID'])[1]
         mail_from = email.utils.parseaddr(msg['From'])[1]
-        return str(data, charset), mail_from, message_id, mail_date
+        return str(data, charset).strip(), mail_from, message_id, mail_date
 
     def _parse_part_to_str(self, part):
         charset = part.get_charset() or part.get_param('charset') or 'gb2312'
@@ -93,10 +93,13 @@ class GMail:
         payload = part.get_payload(decode=True)
         if not payload:
             return ''
+        if sys.getsizeof(payload) <= 34:
+            return ''
         return str(part.get_payload(decode=True), charset).replace("&nbsp;", " ")
 
     def _parse_body(self, msg):
         mail_body = ''
+
         for part in msg.walk():
             if not part.is_multipart():
                 name = part.get_param("name")
@@ -116,7 +119,9 @@ class GMail:
                 result, data = self._imap_conn.fetch(num, '(RFC822)')
                 if result == 'OK':
                     msg = email.message_from_string(data[0][1].decode())
+                    LOG.info(msg)
                     mail_subject, mail_from, message_id, mail_date = self._parse_header(msg)
+
                     mail_body = self._parse_body(msg)
                     query_mail = {'messageid': message_id, 'subject': mail_subject, 'from': mail_from,
                                   'body': mail_body, 'num': num, 'date': mail_date}
