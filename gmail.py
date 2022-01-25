@@ -21,11 +21,14 @@ MAIL_HTML = """
   <body>
     <p>{0}，你好：
         <p style=\"text-indent: 2em;\">查询结果见附件</p>
-        <p style=\"text-indent: 10em;\"><a href=\"https://github.com/guohai163/jdoka\" target=\"view_window\">jdoka</a>.</p>
+        <p style=\"text-indent: 10em;\">
+            <a href=\"https://github.com/guohai163/jdoka\" target=\"view_window\">jdoka</a>.
+        </p>
     </p>
   </body>
 </html>
 """
+
 
 class GMail:
     # TODO:类需要进行重构，需要使用smtp时再进行连接，否则会超时
@@ -136,7 +139,7 @@ class GMail:
         :param attach_path:
         :param to_mail:
         :param subject:
-        :param body:
+        :param attach_path:
         :return:
         """
         msg = MIMEMultipart()
@@ -160,7 +163,12 @@ class GMail:
             smtp_conn.login(self._user, self._pass)
         except smtplib.SMTPAuthenticationError as e:
             LOG.error("smtp登录失败: %s" % e)
-            return
-        smtp_conn.sendmail(from_addr=self._user, to_addrs=to_mail.split(","), msg=msg.as_string())
-        smtp_conn.quit()
+            return False
+        try:
+            smtp_conn.sendmail(from_addr=self._user, to_addrs=to_mail.split(","), msg=msg.as_string())
+            smtp_conn.quit()
 
+        except smtplib.SMTPException as e:
+            LOG.error("sendmail except %s" % e)
+            return False
+        return True

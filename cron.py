@@ -49,7 +49,6 @@ def init_cron_task():
 
 
 def send_data(task):
-    print(task)
     mail_config_path = '%s/conf/mail-config.ini' % BASE_DIR
     db_config = '%s/conf/db-config.ini' % BASE_DIR
     profession_config = '%s/conf/profession.conf' % BASE_DIR
@@ -60,7 +59,7 @@ def send_data(task):
     config.read(CRON_CONFIG_PATH)
     query = {'subject': config[task]['task'], 'from': config[task]['mail']}
     result = work.query(parm=query)
-    print(result)
+    LOG.info(result)
     if result is None:
         LOG.info('邮件<%s>查询无结果', query['messageid'])
         # mail.delete(query['num'])
